@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #0A0A0F;
+    --bg-surface: #111827;
+    --bg-card: rgba(17, 24, 39, 0.75);
+    --primary: #6366F1;
+    --secondary: #00E5A8;
+    --accent: #BB5CF6;
+    --highlight: #F43F5E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #E0E0E0;
+    --border-glow: rgba(99, 102, 241, 0.35);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #0A0A0F;
+    color: #E0E0E0;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+  }
+}
+
+/* Glow utilities */
+.glow-primary {
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.45);
+}
+
+.glow-secondary {
+  box-shadow: 0 0 25px rgba(0, 229, 168, 0.45);
+}
+
+.glow-accent {
+  box-shadow: 0 0 25px rgba(187, 92, 246, 0.45);
+}
+
+.glow-highlight {
+  box-shadow: 0 0 25px rgba(244, 63, 94, 0.45);
+}
+
+/* Text Gradients */
+.text-gradient-hackverse {
+  background: linear-gradient(135deg, #00E5A8 0%, #6366F1 50%, #BB5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-impact {
+  background: linear-gradient(135deg, #00F5FF 0%, #6366F1 45%, #BB5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-glass {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bg-glass-card {
+  background: rgba(17, 24, 39, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+}
+
+.bg-glass-card:hover {
+  border-color: rgba(0, 229, 168, 0.45);
+  box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.2);
+}
+
+.bg-tech-grid {
+  background-size: 36px 36px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
+/* Laser Scan Animation for QR Scanner */
+@keyframes scanLaserAnim {
+  0% {
+    top: 5%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 92%;
+    opacity: 1;
+  }
+  100% {
+    top: 5%;
+    opacity: 0.8;
+  }
+}
+
+.animate-laser {
+  animation: scanLaserAnim 2.6s ease-in-out infinite;
+}
+
+/* Orbit Rotation for 3D Globe */
+@keyframes orbitRing {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-orbit {
+  animation: orbitRing 25s linear infinite;
+}
+
+.animate-orbit-reverse {
+  animation: orbitRing 35s linear infinite reverse;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0F;
+}
+::-webkit-scrollbar-thumb {
+  background: #1F2937;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6366F1;
+}
