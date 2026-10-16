@@ -1,0 +1,62 @@
+# ========================================================
+# TECHSPIRIT-2026 Hackathon Platform - Git Ignore Rules
+# ========================================================
+
+# 1. Dependency Directories
+node_modules/
+*/node_modules/
+package-lock.json.backup
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 2. Environment Variables & Secret Credentials
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+*.env.local
+credentials.json
+client_secret.json
+*client_secret*.json
+service_account.json
+
+# 3. Production Build Artifacts
+dist/
+dist-ssr/
+frontend/dist/
+build/
+*.tsbuildinfo
+
+# 4. Local Database & Cache Files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.cache/
+.parcel-cache/
+.turbo/
+backend/data/*.tmp
+
+# 5. OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 6. IDE & Editor Configs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

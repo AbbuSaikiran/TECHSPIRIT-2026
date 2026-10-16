@@ -9,7 +9,7 @@
       "end_date": "2026-10-27T18:00:00",
       "venue": "BITS Campus Auditorium & Tech Hub",
       "status": "PUBLISHED",
-      "prize_pool": "\u20b91,50,000",
+      "prize_pool": "₹1,50,000",
       "domains": [
         "Cybersecurity & Privacy",
         "Artificial Intelligence & ML",
@@ -198,6 +198,39 @@
       "created_at": "2026-10-13T09:12:00",
       "checked_in": false,
       "checkin_time": null
+    },
+    {
+      "team_id": "team-bts-095abfea",
+      "registration_id": "BTS26-0003",
+      "event_id": "TECHSPIRIT-2026",
+      "team_name": "CyberTitans Test",
+      "domain": "Open Innovation",
+      "leader_name": "Aakash Verma",
+      "leader_email": "aakash.test@example.com",
+      "leader_phone": "",
+      "college": "Engineering Institute",
+      "team_size": 1,
+      "members": [
+        {
+          "name": "Aakash Verma",
+          "email": "aakash.test@example.com",
+          "phone": "",
+          "college": "Engineering Institute",
+          "department": "CSE",
+          "year": "3rd Year",
+          "is_leader": true
+        }
+      ],
+      "registration_status": "CHECKED_IN",
+      "payment_status": "PAID",
+      "amount": 1000,
+      "fee_type": "online",
+      "qr_token": "QR-BTS26-0003-FFC7B0BB",
+      "qr_code_url": "data:image/png;base64,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",
+      "custom_fields": {},
+      "created_at": "2026-10-16T15:44:49.879Z",
+      "checked_in": true,
+      "checkin_time": "2026-10-16T15:44:49.898Z"
     }
   ],
   "payments": [
@@ -271,6 +304,15 @@
       "scanned_by": "Staff Desk 1",
       "timestamp": "2026-10-14T10:15:20",
       "entry_status": "APPROVED"
+    },
+    {
+      "checkin_id": "chk-97fbcc40",
+      "team_id": "team-bts-095abfea",
+      "registration_id": "BTS26-0003",
+      "team_name": "CyberTitans Test",
+      "scanned_by": "Staff Desk",
+      "timestamp": "2026-10-16T15:44:49.898Z",
+      "entry_status": "APPROVED"
     }
   ],
   "audit_logs": [
@@ -280,6 +322,20 @@
       "action": "INIT_DATABASE",
       "details": "Hackathon platform initialized for BITS TECHSPIRIT 2026",
       "timestamp": "2026-10-14T00:00:00"
+    },
+    {
+      "log_id": "log-798de46c",
+      "actor": "aakash.test@example.com",
+      "action": "REGISTER_TEAM",
+      "details": "Team CyberTitans Test (BTS26-0003) registered with 1 members.",
+      "timestamp": "2026-10-16T15:44:49.883Z"
+    },
+    {
+      "log_id": "log-0afad8e8",
+      "actor": "Staff Desk",
+      "action": "TEAM_CHECKED_IN",
+      "details": "Team CyberTitans Test (BTS26-0003) checked in by Staff Desk.",
+      "timestamp": "2026-10-16T15:44:49.901Z"
     }
   ]
 }

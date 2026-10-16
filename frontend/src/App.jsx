@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Explore from './pages/Explore';
@@ -21,6 +21,37 @@ export default function App() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [formFields, setFormFields] = useState(DEFAULT_FORM_BUILDER_FIELDS);
   const [user, setUser] = useState(ROHAN_USER);
+
+  // Handle Google OAuth redirect token
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+          .then((res) => res.json())
+          .then((profile) => {
+            if (profile && profile.email) {
+              setUser({
+                name: profile.name || 'Google Innovator',
+                email: profile.email,
+                avatar: profile.picture,
+                role: 'Participant',
+                college: 'Partner Institute',
+                team: 'Tech Titans',
+                stats: { registered: 3, ongoing: 1, completed: 2, certificates: 5 }
+              });
+              setCurrentView('participant');
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          })
+          .catch((err) => console.warn('OAuth redirect notice:', err));
+      }
+    }
+  }, []);
 
   const handleSelectHackathon = (hackathon) => {
     setSelectedHackathon(hackathon);

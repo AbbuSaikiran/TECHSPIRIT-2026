@@ -1,24 +1,218 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   Mail, 
   Lock, 
   CheckCircle2, 
-  Globe 
+  Globe,
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '429603335767-tfa0uohlkbp9hb3kcloh81f272jqiqf0.apps.googleusercontent.com';
+const GOOGLE_PROJECT_ID = import.meta.env.VITE_GOOGLE_PROJECT_ID || 'hackathon-platform-511814';
+
+// Helper to decode Google JWT token
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
 
 export default function Login({ onBackToHome, onLoginSuccess }) {
   const [isLoginTab, setIsLoginTab] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [statusMsg, setStatusMsg] = useState(null);
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+
+  // Initialize Google Identity Services (GSI)
+  useEffect(() => {
+    const initGsi = () => {
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+          });
+
+          // Render button into container if present
+          const btnElem = document.getElementById('google-btn-rendered');
+          if (btnElem) {
+            window.google.accounts.id.renderButton(btnElem, {
+              theme: 'filled_black',
+              size: 'large',
+              width: '100%',
+              text: isLoginTab ? 'signin_with' : 'signup_with',
+              shape: 'pill'
+            });
+          }
+        } catch (err) {
+          console.warn('GSI init notice:', err);
+        }
+      }
+    };
+
+    // Retry after delay if script is still loading
+    initGsi();
+    const timer = setTimeout(initGsi, 1000);
+    return () => clearTimeout(timer);
+  }, [isLoginTab]);
+
+  const handleGoogleCredentialResponse = async (response) => {
+    setIsLoadingGoogle(false);
+    if (!response || !response.credential) {
+      return;
+    }
+
+    const payload = parseJwt(response.credential);
+    if (payload && payload.email) {
+      const userProfile = {
+        name: payload.name || payload.email.split('@')[0],
+        email: payload.email,
+        avatar: payload.picture || null,
+        role: 'Participant',
+        college: 'BITS Pilani / Partner Institute',
+        team: 'Innovator Squad',
+        authProvider: 'google',
+        googleId: payload.sub
+      };
+
+      // Attempt backend verification sync if FastAPI is listening
+      try {
+        await fetch('http://localhost:8000/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential })
+        });
+      } catch (e) {
+        // Safe offline fallback
+      }
+
+      setStatusMsg({
+        type: 'success',
+        text: `Signed in as ${userProfile.name} (${userProfile.email})`
+      });
+
+      setTimeout(() => {
+        if (onLoginSuccess) {
+          onLoginSuccess(userProfile);
+        }
+      }, 600);
+    }
+  };
+
+  const handleGoogleSignInClick = () => {
+    setIsLoadingGoogle(true);
+    setStatusMsg({ type: 'info', text: 'Connecting to Google OAuth...' });
+
+    // Try Google prompt
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          // If prompt blocked, launch direct OAuth 2.0 redirect / popup
+          launchDirectGoogleOAuth();
+        }
+      });
+    } else {
+      launchDirectGoogleOAuth();
+    }
+  };
+
+  const launchDirectGoogleOAuth = () => {
+    // Construct standard OAuth 2.0 authorization URL
+    const redirectUri = window.location.origin;
+    const scope = encodeURIComponent('email profile openid');
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}&prompt=select_account`;
+
+    // Try popup window first
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2.5;
+
+    const popup = window.open(
+      authUrl,
+      'GoogleSignIn',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      // Popups blocked, redirect directly
+      window.location.href = authUrl;
+    } else {
+      // Listen for popup callback or focus return
+      const checkPopup = setInterval(() => {
+        try {
+          if (!popup || popup.closed) {
+            clearInterval(checkPopup);
+            setIsLoadingGoogle(false);
+          } else if (popup.location.href.includes('access_token')) {
+            const hash = popup.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const token = params.get('access_token');
+            popup.close();
+            clearInterval(checkPopup);
+            if (token) {
+              fetchGoogleProfile(token);
+            }
+          }
+        } catch (e) {
+          // Cross-origin before redirect is expected
+        }
+      }, 500);
+    }
+  };
+
+  const fetchGoogleProfile = async (accessToken) => {
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const profile = await res.json();
+      if (profile && profile.email) {
+        const userProfile = {
+          name: profile.name,
+          email: profile.email,
+          avatar: profile.picture,
+          role: 'Participant',
+          college: 'BITS Pilani / Partner Institute',
+          team: 'Innovator Squad',
+          authProvider: 'google'
+        };
+        setStatusMsg({ type: 'success', text: `Welcome ${profile.name}!` });
+        setTimeout(() => {
+          if (onLoginSuccess) onLoginSuccess(userProfile);
+        }, 500);
+      }
+    } catch (err) {
+      setIsLoadingGoogle(false);
+      setStatusMsg({ type: 'error', text: 'Could not fetch Google profile.' });
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onLoginSuccess) {
       onLoginSuccess({
         name: isLoginTab ? 'Rohan Kumar' : 'New Innovator',
-        email: email,
-        role: 'Participant'
+        email: email || 'rohan@example.com',
+        college: 'VIT Chennai',
+        team: 'Tech Titans',
+        role: 'Participant',
+        avatar: 'R'
       });
     }
   };
@@ -66,6 +260,12 @@ export default function Login({ onBackToHome, onLoginSuccess }) {
             <p className="text-xs text-slate-400 mt-1">
               {isLoginTab ? 'Login to continue your hackathon journey' : 'Join thousands of innovators and builders'}
             </p>
+
+            {/* Google OAuth Connected Status Pill */}
+            <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00E5A8] animate-pulse" />
+              <span>OAuth 2.0 • {GOOGLE_PROJECT_ID}</span>
+            </div>
           </div>
 
           {/* Tab Switcher [Login | Sign Up] */}
@@ -88,12 +288,32 @@ export default function Login({ onBackToHome, onLoginSuccess }) {
             </button>
           </div>
 
+          {/* Status Message */}
+          {statusMsg && (
+            <div className={`mb-4 p-3 rounded-xl text-xs font-mono flex items-center gap-2 border ${
+              statusMsg.type === 'success' 
+                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' 
+                : statusMsg.type === 'error'
+                ? 'bg-rose-950/40 border-rose-500/40 text-rose-300'
+                : 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300'
+            }`}>
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{statusMsg.text}</span>
+            </div>
+          )}
+
           {/* Social Logins */}
           <div className="space-y-2.5 mb-6">
+            
+            {/* Google Identity Services Hidden/Visible Container */}
+            <div id="google-btn-rendered" className="hidden" />
+
+            {/* Google Custom Styled Button */}
             <button 
               type="button"
-              onClick={handleSubmit}
-              className="w-full py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 flex items-center justify-center gap-2.5 transition-colors"
+              onClick={handleGoogleSignInClick}
+              disabled={isLoadingGoogle}
+              className="w-full py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 flex items-center justify-center gap-2.5 transition-all hover:border-[#6366F1]/50 group"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/>
@@ -101,9 +321,10 @@ export default function Login({ onBackToHome, onLoginSuccess }) {
                 <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.5.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"/>
                 <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
               </svg>
-              <span>Continue with Google</span>
+              <span>{isLoadingGoogle ? 'Connecting with Google...' : 'Continue with Google'}</span>
             </button>
 
+            {/* GitHub Button */}
             <button 
               type="button"
               onClick={handleSubmit}

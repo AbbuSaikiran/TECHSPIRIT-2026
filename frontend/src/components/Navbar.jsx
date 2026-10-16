@@ -157,19 +157,42 @@ export default function Navbar({ currentView, setCurrentView, user, onOpenLogin 
             </div>
           </div>
 
-          {/* Auth Action Buttons */}
-          <button 
-            onClick={() => setCurrentView('login')}
-            className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 transition-colors"
-          >
-            Login
-          </button>
-          <button 
-            onClick={() => setCurrentView('login')}
-            className="px-4 py-2 rounded-xl text-xs font-bold font-heading bg-gradient-to-r from-[#00F5FF] via-[#6366F1] to-[#BB5CF6] text-white hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] transition-all"
-          >
-            Sign Up
-          </button>
+          {/* Auth Action / User Profile */}
+          {user ? (
+            <div className="flex items-center gap-2 pl-2 border-l border-white/10">
+              <button 
+                onClick={() => setCurrentView('participant')}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group"
+                title={`Logged in as ${user.name}`}
+              >
+                {user.avatar && typeof user.avatar === 'string' && user.avatar.startsWith('http') ? (
+                  <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover border border-[#6366F1]" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#BB5CF6] text-white flex items-center justify-center text-[10px] font-bold">
+                    {user.avatar || (user.name ? user.name[0] : 'U')}
+                  </div>
+                )}
+                <span className="text-xs font-semibold text-slate-200 group-hover:text-white max-w-[110px] truncate">
+                  {user.name}
+                </span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={() => setCurrentView('login')}
+                className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 transition-colors"
+              >
+                Login
+              </button>
+              <button 
+                onClick={() => setCurrentView('login')}
+                className="px-4 py-2 rounded-xl text-xs font-bold font-heading bg-gradient-to-r from-[#00F5FF] via-[#6366F1] to-[#BB5CF6] text-white hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] transition-all"
+              >
+                Sign Up
+              </button>
+            </>
+          )}
         </div>
 
         {/* Mobile Hamburger Button */}
