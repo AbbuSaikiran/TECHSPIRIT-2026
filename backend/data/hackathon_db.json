@@ -59,6 +59,13 @@
       "role": "volunteer",
       "password_hash": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQmG6W65WVRMQM5o2F0vK",
       "created_at": "2026-10-01T00:00:00"
+    },
+    {
+      "user_id": "usr-641cb9ba",
+      "email": "abbusaikiran2@gmail.com",
+      "name": "Sybrai",
+      "role": "super_admin",
+      "created_at": "2026-10-17T01:04:37.385Z"
     }
   ],
   "form_fields": [
@@ -190,14 +197,14 @@
           "is_leader": false
         }
       ],
-      "registration_status": "CONFIRMED",
+      "registration_status": "CHECKED_IN",
       "payment_status": "PAID",
       "amount": 1000,
       "fee_type": "online",
       "qr_token": "QR-BTS26-0002-SECURE-TOKEN-B72C",
       "created_at": "2026-10-13T09:12:00",
-      "checked_in": false,
-      "checkin_time": null
+      "checked_in": true,
+      "checkin_time": "2026-10-17T00:58:17.643Z"
     },
     {
       "team_id": "team-bts-095abfea",
@@ -231,6 +238,114 @@
       "created_at": "2026-10-16T15:44:49.879Z",
       "checked_in": true,
       "checkin_time": "2026-10-16T15:44:49.898Z"
+    },
+    {
+      "team_id": "team-bts-d87f3152",
+      "registration_id": "BTS26-0004",
+      "event_id": "TECHSPIRIT-2026",
+      "team_name": "TestInnovators_1792197857195",
+      "domain": "Artificial Intelligence & ML",
+      "leader_name": "Test User",
+      "leader_email": "test_1792197857195@example.com",
+      "leader_phone": "",
+      "college": "Engineering Institute",
+      "team_size": 1,
+      "members": [
+        {
+          "name": "Test User",
+          "email": "test_1792197857195@example.com",
+          "phone": "",
+          "college": "Engineering Institute",
+          "department": "CSE",
+          "year": "3rd Year",
+          "is_leader": true
+        }
+      ],
+      "registration_status": "CONFIRMED",
+      "payment_status": "PAID",
+      "amount": 1000,
+      "fee_type": "online",
+      "qr_token": "QR-BTS26-0004-9ACEF112",
+      "qr_code_url": "data:image/png;base64,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",
+      "custom_fields": {},
+      "created_at": "2026-10-17T00:44:17.643Z",
+      "checked_in": false,
+      "checkin_time": null
+    },
+    {
+      "team_id": "team-bts-6daa5aa9",
+      "registration_id": "BTS26-0005",
+      "event_id": "TECHSPIRIT-2026",
+      "team_name": "HyperGrid_4232",
+      "domain": "Artificial Intelligence & ML",
+      "leader_name": "Sai Kiran",
+      "leader_email": "saikiran_4232@techspirit.org",
+      "leader_phone": "",
+      "college": "Engineering Institute",
+      "team_size": 1,
+      "members": [
+        {
+          "name": "Sai Kiran",
+          "email": "saikiran_4232@techspirit.org",
+          "phone": "",
+          "college": "Engineering Institute",
+          "department": "CSE",
+          "year": "3rd Year",
+          "is_leader": true
+        }
+      ],
+      "registration_status": "CHECKED_IN",
+      "payment_status": "PAID",
+      "amount": 1000,
+      "fee_type": "online",
+      "qr_token": "QR-BTS26-0005-B9519198",
+      "qr_code_url": "data:image/png;base64,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",
+      "custom_fields": {},
+      "created_at": "2026-10-17T01:05:24.243Z",
+      "checked_in": true,
+      "checkin_time": "2026-10-17T01:05:24.251Z"
+    },
+    {
+      "team_id": "team-bts-30856db0",
+      "registration_id": "BTS26-0006",
+      "event_id": "TECHSPIRIT-2026",
+      "team_name": "ApexBuilders_5166",
+      "domain": "Blockchain & Web3",
+      "leader_name": "Sybrni Innovator",
+      "leader_email": "sybrni@example.com",
+      "leader_phone": "+91 9988776655",
+      "college": "BITS Pilani",
+      "team_size": 2,
+      "members": [
+        {
+          "name": "Sybrni Innovator",
+          "email": "sybrni@example.com",
+          "phone": "+91 9988776655",
+          "college": "BITS Pilani",
+          "department": "CSE",
+          "year": "3rd Year",
+          "is_leader": true
+        },
+        {
+          "name": "Alex Johnson",
+          "email": "alex@example.com",
+          "phone": "+91 9988776656",
+          "college": "BITS Pilani",
+          "department": "ECE",
+          "year": "3rd Year",
+          "is_leader": false
+        }
+      ],
+      "project_summary": "Decentralized automated oracle for real-time sensor verification",
+      "registration_status": "CONFIRMED",
+      "payment_status": "PAID",
+      "amount": 1000,
+      "fee_type": "online",
+      "qr_token": "QR-BTS26-0006-DF9BFCF9",
+      "qr_code_url": "data:image/png;base64,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",
+      "created_at": "2026-10-17T01:21:15.386Z",
+      "checked_in": false,
+      "checkin_time": null
     }
   ],
   "payments": [
@@ -313,6 +428,24 @@
       "scanned_by": "Staff Desk",
       "timestamp": "2026-10-16T15:44:49.898Z",
       "entry_status": "APPROVED"
+    },
+    {
+      "checkin_id": "chk-b57427fb",
+      "team_id": "team-bts-0002",
+      "registration_id": "BTS26-0002",
+      "team_name": "NeuroVision AI",
+      "scanned_by": "Test Desk Admin",
+      "timestamp": "2026-10-17T00:58:17.643Z",
+      "entry_status": "APPROVED"
+    },
+    {
+      "checkin_id": "chk-60e8e7ef",
+      "team_id": "team-bts-6daa5aa9",
+      "registration_id": "BTS26-0005",
+      "team_name": "HyperGrid_4232",
+      "scanned_by": "Staff Desk",
+      "timestamp": "2026-10-17T01:05:24.251Z",
+      "entry_status": "APPROVED"
     }
   ],
   "audit_logs": [
@@ -336,6 +469,94 @@
       "action": "TEAM_CHECKED_IN",
       "details": "Team CyberTitans Test (BTS26-0003) checked in by Staff Desk.",
       "timestamp": "2026-10-16T15:44:49.901Z"
+    },
+    {
+      "log_id": "log-8bae8d7b",
+      "actor": "test_1792197857195@example.com",
+      "action": "REGISTER_TEAM",
+      "details": "Team TestInnovators_1792197857195 (BTS26-0004) registered with 1 members.",
+      "timestamp": "2026-10-17T00:44:17.647Z"
+    },
+    {
+      "log_id": "log-dd2ca5ff",
+      "actor": "Test Desk Admin",
+      "action": "TEAM_CHECKED_IN",
+      "details": "Team NeuroVision AI (BTS26-0002) checked in by Test Desk Admin.",
+      "timestamp": "2026-10-17T00:58:17.645Z"
+    },
+    {
+      "log_id": "log-1b276361",
+      "actor": "saikiran_4232@techspirit.org",
+      "action": "REGISTER_TEAM",
+      "details": "Team HyperGrid_4232 (BTS26-0005) registered with 1 members.",
+      "timestamp": "2026-10-17T01:05:24.246Z"
+    },
+    {
+      "log_id": "log-87e66486",
+      "actor": "Staff Desk",
+      "action": "TEAM_CHECKED_IN",
+      "details": "Team HyperGrid_4232 (BTS26-0005) checked in by Staff Desk.",
+      "timestamp": "2026-10-17T01:05:24.254Z"
+    },
+    {
+      "log_id": "log-ceab4be1",
+      "actor": "Admin",
+      "action": "SYNC_GOOGLE_SHEETS",
+      "details": "Full database sync executed. Result: Database processed into 11 Google Sheets tab structures. Connected to Google Sheet ID: 1Y8ExCm3-oXK10o7Wysml0ITGXsLfnqb5kV899ddMm5k",
+      "timestamp": "2026-10-17T01:05:24.267Z"
+    },
+    {
+      "log_id": "log-d2e6dec2",
+      "actor": "sybrni@example.com",
+      "action": "REGISTER_TEAM",
+      "details": "Team ApexBuilders_5166 (BTS26-0006) created by sybrni@example.com.",
+      "timestamp": "2026-10-17T01:21:15.389Z"
+    }
+  ],
+  "volunteers": [
+    {
+      "id": "vol-1",
+      "name": "Aakash Verma",
+      "email": "aakash.v@bitstechspirit.org",
+      "phone": "+91 98451 22301",
+      "desk": "Desk Alpha (Main Gate)",
+      "role": "QR Verification Lead",
+      "shift": "Morning (08:00 - 14:00)",
+      "active": true,
+      "scansCount": 14
+    },
+    {
+      "id": "vol-2",
+      "name": "Pooja Iyer",
+      "email": "pooja.i@bitstechspirit.org",
+      "phone": "+91 97120 44512",
+      "desk": "Desk Beta (Auditorium)",
+      "role": "Attendee Kit & ID Badges",
+      "shift": "Morning (08:00 - 14:00)",
+      "active": true,
+      "scansCount": 9
+    },
+    {
+      "id": "vol-3",
+      "name": "Kunal Deshmukh",
+      "email": "kunal.d@bitstechspirit.org",
+      "phone": "+91 99801 88310",
+      "desk": "Desk Gamma (Hardware Lab)",
+      "role": "Component & Sensor Vault",
+      "shift": "All Day (09:00 - 18:00)",
+      "active": true,
+      "scansCount": 5
+    },
+    {
+      "id": "vol-4",
+      "name": "Simran Kaur",
+      "email": "simran.k@bitstechspirit.org",
+      "phone": "+91 96500 11982",
+      "desk": "Desk Delta (Dining & Cafe)",
+      "role": "Meal Pass Dispatcher",
+      "shift": "Afternoon (12:00 - 18:00)",
+      "active": true,
+      "scansCount": 0
     }
   ]
 }

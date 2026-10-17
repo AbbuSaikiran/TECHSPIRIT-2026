@@ -8,6 +8,8 @@ import ParticipantDashboard from './pages/ParticipantDashboard';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import FormBuilder from './pages/FormBuilder';
 import QRScanner from './pages/QRScanner';
+import Admin from './pages/Admin';
+import Volunteers from './pages/Volunteers';
 import RegistrationModal from './components/RegistrationModal';
 import { 
   HACKVERSE_EVENTS, 
@@ -20,7 +22,24 @@ export default function App() {
   const [selectedHackathon, setSelectedHackathon] = useState(HACKVERSE_EVENTS[0]);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [formFields, setFormFields] = useState(DEFAULT_FORM_BUILDER_FIELDS);
-  const [user, setUser] = useState(ROHAN_USER);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('techspirit_user');
+      return saved !== null ? JSON.parse(saved) : ROHAN_USER;
+    } catch (e) {
+      return ROHAN_USER;
+    }
+  });
+
+  const handleLogout = () => {
+    setUser(null);
+    try {
+      localStorage.removeItem('techspirit_user');
+      localStorage.removeItem('techspirit_token');
+    } catch (e) {}
+    setCurrentView('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Handle Google OAuth redirect token
   useEffect(() => {
@@ -35,7 +54,7 @@ export default function App() {
           .then((res) => res.json())
           .then((profile) => {
             if (profile && profile.email) {
-              setUser({
+              const googleUser = {
                 name: profile.name || 'Google Innovator',
                 email: profile.email,
                 avatar: profile.picture,
@@ -43,7 +62,11 @@ export default function App() {
                 college: 'Partner Institute',
                 team: 'Tech Titans',
                 stats: { registered: 3, ongoing: 1, completed: 2, certificates: 5 }
-              });
+              };
+              setUser(googleUser);
+              try {
+                localStorage.setItem('techspirit_user', JSON.stringify(googleUser));
+              } catch (e) {}
               setCurrentView('participant');
               window.history.replaceState(null, '', window.location.pathname);
             }
@@ -78,6 +101,7 @@ export default function App() {
           }}
           user={user}
           onOpenLogin={() => setCurrentView('login')}
+          onLogout={handleLogout}
         />
       )}
 
@@ -120,7 +144,12 @@ export default function App() {
             onBackToHome={() => setCurrentView('home')}
             onLoginSuccess={(loggedUser) => {
               setUser(loggedUser);
-              setCurrentView('participant');
+              try {
+                localStorage.setItem('techspirit_user', JSON.stringify(loggedUser));
+              } catch (e) {}
+              const isAdmin = loggedUser.role === 'super_admin' || loggedUser.role === 'organizer' || loggedUser.role === 'event_admin';
+              setCurrentView(isAdmin ? 'organizer' : 'participant');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
         )}
@@ -128,20 +157,23 @@ export default function App() {
         {/* 5. Participant Dashboard */}
         {currentView === 'participant' && (
           <ParticipantDashboard 
+            user={user}
             onOpenScanner={() => setCurrentView('scanner')}
             onSelectEvent={(eventId) => {
               const found = HACKVERSE_EVENTS.find(e => e.id === eventId);
               if (found) handleSelectHackathon(found);
             }}
-            onLogout={() => setCurrentView('home')}
+            onLogout={handleLogout}
+            onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
           />
         )}
 
         {/* 6. Organizer Dashboard */}
         {currentView === 'organizer' && (
           <OrganizerDashboard 
+            user={user}
             onNavigateToFormBuilder={() => setCurrentView('form-builder')}
-            onLogout={() => setCurrentView('home')}
+            onLogout={handleLogout}
           />
         )}
 
@@ -157,7 +189,33 @@ export default function App() {
         {/* 8. QR Scanner Page */}
         {currentView === 'scanner' && (
           <QRScanner 
-            onBack={() => setCurrentView('participant')}
+            onBack={() => setCurrentView('volunteers')}
+          />
+        )}
+
+        {/* 9. Admin Control Center */}
+        {currentView === 'admin' && (
+          <Admin 
+            user={user}
+            onNavigateToVolunteers={() => {
+              setCurrentView('volunteers');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {/* 10. Volunteers & Operations Desk */}
+        {currentView === 'volunteers' && (
+          <Volunteers 
+            user={user}
+            onOpenScanner={() => {
+              setCurrentView('scanner');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onNavigateToAdmin={() => {
+              setCurrentView('admin');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 

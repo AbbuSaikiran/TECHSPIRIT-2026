@@ -92,6 +92,96 @@ export async function syncGoogleSheets() {
   return response.json();
 }
 
+export async function getUserTeam(email) {
+  if (!email) return { success: false, team: null };
+  const response = await fetch(`${API_URL}/teams/user/${encodeURIComponent(email)}`);
+  if (!response.ok) {
+    return { success: false, team: null };
+  }
+  return response.json();
+}
+
+export async function saveUserTeam(teamData) {
+  const response = await fetch(`${API_URL}/teams/user/save`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(teamData)
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to save team details');
+  }
+  return result;
+}
+
+export async function getAdminTeams() {
+  const response = await fetch(`${API_URL}/admin/teams`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch teams');
+  }
+  return response.json();
+}
+
+export async function updateAdminTeam(teamId, data) {
+  const response = await fetch(`${API_URL}/admin/teams/${encodeURIComponent(teamId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return response.json();
+}
+
+export async function deleteAdminTeam(teamId) {
+  const response = await fetch(`${API_URL}/admin/teams/${encodeURIComponent(teamId)}`, {
+    method: 'DELETE'
+  });
+  return response.json();
+}
+
+export async function getAdminAuditLogs() {
+  const response = await fetch(`${API_URL}/admin/audit-logs`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch audit logs');
+  }
+  return response.json();
+}
+
+export async function getVolunteers() {
+  const response = await fetch(`${API_URL}/operations/volunteers`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch volunteers');
+  }
+  return response.json();
+}
+
+export async function addVolunteer(volunteerData) {
+  const response = await fetch(`${API_URL}/operations/volunteers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(volunteerData)
+  });
+  return response.json();
+}
+
+export async function getCheckins() {
+  const response = await fetch(`${API_URL}/operations/checkins`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch check-ins list');
+  }
+  return response.json();
+}
+
+export async function updateKitDistribution(distributionData) {
+  const response = await fetch(`${API_URL}/operations/kit-distribution`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(distributionData)
+  });
+  return response.json();
+}
+
 export default {
   getEvents,
   registerParticipant,
@@ -100,5 +190,15 @@ export default {
   verifyCheckin,
   getLeaderboard,
   getAdminMetrics,
-  syncGoogleSheets
+  getAdminTeams,
+  updateAdminTeam,
+  deleteAdminTeam,
+  getAdminAuditLogs,
+  getVolunteers,
+  addVolunteer,
+  getCheckins,
+  updateKitDistribution,
+  syncGoogleSheets,
+  getUserTeam,
+  saveUserTeam
 };

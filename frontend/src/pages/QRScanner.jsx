@@ -15,11 +15,13 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { ROHAN_USER } from '../mockData';
+import { verifyCheckin } from '../services/api';
 
 export default function QRScanner({ onBack }) {
   const [useCamera, setUseCamera] = useState(false);
-  const [scannedResult, setScannedResult] = useState(null);
-  const [isScanning, setIsScanning] = useState(true);
+  const [ticketInput, setTicketInput] = useState('BTS26-0001');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyStatus, setVerifyStatus] = useState(null);
 
   // Default verified participant matching image
   const [participant, setParticipant] = useState({
@@ -29,8 +31,64 @@ export default function QRScanner({ onBack }) {
     team: ROHAN_USER.team,
     status: 'Checked In',
     checkInTime: 'Oct 12, 2024 • 10:24 AM',
-    ticketId: 'HV24-8842'
+    ticketId: 'BTS26-0001',
+    qrToken: 'QR-BTS26-0001-SECURE-TOKEN-A98F'
   });
+
+  const handleVerifyToken = async (rawToken) => {
+    const token = (rawToken || ticketInput || '').trim();
+    if (!token) return;
+
+    setIsVerifying(true);
+    setVerifyStatus(null);
+
+    try {
+      const res = await verifyCheckin(token, 'Gate 1 - Desk Volunteer');
+      if (res.success && res.team) {
+        setParticipant({
+          name: res.team.leader_name || res.team.team_name,
+          email: res.team.leader_email || 'leader@techspirit.io',
+          college: res.team.college || 'BITS Pilani',
+          team: res.team.team_name,
+          status: 'Verified Entry',
+          checkInTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          ticketId: res.team.registration_id || token,
+          qrToken: res.team.qr_token || token
+        });
+        setVerifyStatus({
+          type: 'success',
+          msg: res.message || `Check-in approved for Team ${res.team.team_name}!`
+        });
+      } else if (res.already_checked_in && res.team) {
+        setParticipant({
+          name: res.team.leader_name || res.team.team_name,
+          email: res.team.leader_email || 'leader@techspirit.io',
+          college: res.team.college || 'BITS Pilani',
+          team: res.team.team_name,
+          status: 'Already Checked In',
+          checkInTime: res.team.checkin_time || 'Earlier Today',
+          ticketId: res.team.registration_id || token,
+          qrToken: res.team.qr_token || token
+        });
+        setVerifyStatus({
+          type: 'warning',
+          msg: res.message || `Team was already checked in.`
+        });
+      } else {
+        setVerifyStatus({
+          type: 'error',
+          msg: res.message || 'Pass not found or invalid token.'
+        });
+      }
+    } catch (err) {
+      setVerifyStatus({
+        type: 'error',
+        msg: 'Connection error while communicating with backend API.'
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   useEffect(() => {
     let scanner = null;
@@ -44,25 +102,7 @@ export default function QRScanner({ onBack }) {
 
         scanner.render(
           (decodedText) => {
-            setScannedResult(decodedText);
-            try {
-              const parsed = JSON.parse(decodedText);
-              setParticipant({
-                name: parsed.name || 'Verified Innovator',
-                email: parsed.email || 'hacker@mit.edu',
-                college: parsed.college || 'Engineering Institute',
-                team: parsed.team || 'Alpha Squad',
-                status: 'Checked In',
-                checkInTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                ticketId: parsed.ticket || 'HV24-NEW'
-              });
-            } catch (e) {
-              setParticipant(prev => ({
-                ...prev,
-                status: 'Checked In',
-                checkInTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              }));
-            }
+            handleVerifyToken(decodedText);
             scanner.clear().catch(() => {});
           },
           (error) => {}
@@ -149,19 +189,64 @@ export default function QRScanner({ onBack }) {
               )}
             </div>
 
-            {/* Scanning Status & Flash Trigger */}
-            <div className="mt-6 flex flex-col items-center gap-3">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono">
-                <span className="w-2 h-2 rounded-full bg-[#00E5A8] animate-ping" />
-                <span>Scanning...</span>
+            {/* Live Verification Status Notice */}
+            {verifyStatus && (
+              <div className={`mt-4 w-full p-3 rounded-xl text-xs font-mono border text-left ${
+                verifyStatus.type === 'success' 
+                  ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                  : verifyStatus.type === 'warning'
+                  ? 'bg-amber-950/60 border-amber-500/40 text-amber-300'
+                  : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+              }`}>
+                <div className="font-bold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{verifyStatus.type === 'success' ? 'ENTRY APPROVED' : verifyStatus.type === 'warning' ? 'DUPLICATE SCAN' : 'NOT FOUND'}</span>
+                </div>
+                <div className="text-[11px] mt-1 text-slate-300">{verifyStatus.msg}</div>
+              </div>
+            )}
+
+            {/* Quick Test / Manual Entry Bar */}
+            <div className="mt-5 w-full pt-4 border-t border-white/10 text-left">
+              <label className="text-[11px] font-mono text-slate-400 block mb-1.5">
+                Manual Desk Check-in (Token or Registration ID):
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={ticketInput}
+                  onChange={(e) => setTicketInput(e.target.value)}
+                  placeholder="e.g. BTS26-0001"
+                  className="flex-1 bg-[#0A0A0F] border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-[#00E5A8]"
+                />
+                <button
+                  type="button"
+                  disabled={isVerifying}
+                  onClick={() => handleVerifyToken(ticketInput)}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#00E5A8] to-[#00F5FF] text-black font-bold font-heading text-xs uppercase hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+                >
+                  {isVerifying ? 'Checking...' : 'Verify'}
+                </button>
               </div>
 
-              <button 
-                type="button"
-                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 hover:border-[#00E5A8] text-slate-300 hover:text-white flex items-center justify-center transition-colors shadow-lg"
-              >
-                <Zap className="w-4 h-4 fill-[#00E5A8] text-[#00E5A8]" />
-              </button>
+              {/* Sample tokens */}
+              <div className="flex items-center gap-2 mt-2.5 text-[10px] font-mono text-slate-400">
+                <span>Quick test IDs:</span>
+                <button
+                  type="button"
+                  onClick={() => { setTicketInput('BTS26-0001'); handleVerifyToken('BTS26-0001'); }}
+                  className="px-2 py-0.5 rounded bg-white/5 border border-white/10 hover:border-cyan-400 text-cyan-300"
+                >
+                  BTS26-0001
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setTicketInput('BTS26-0004'); handleVerifyToken('BTS26-0004'); }}
+                  className="px-2 py-0.5 rounded bg-white/5 border border-white/10 hover:border-cyan-400 text-cyan-300"
+                >
+                  BTS26-0004
+                </button>
+              </div>
             </div>
 
           </div>

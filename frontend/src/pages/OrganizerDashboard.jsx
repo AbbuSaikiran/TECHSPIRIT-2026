@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -16,12 +16,45 @@ import {
   Clock, 
   CheckCircle2, 
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Database,
+  RefreshCw
 } from 'lucide-react';
 import { PRIYA_ORGANIZER } from '../mockData';
+import { getAdminMetrics, syncGoogleSheets } from '../services/api';
 
-export default function OrganizerDashboard({ onNavigateToFormBuilder, onLogout }) {
+export default function OrganizerDashboard({ user, onNavigateToFormBuilder, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [liveMetrics, setLiveMetrics] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState(null);
+
+  useEffect(() => {
+    getAdminMetrics()
+      .then(data => setLiveMetrics(data))
+      .catch(err => console.warn('Live metrics load notice:', err));
+  }, []);
+
+  const handleSyncSheets = async () => {
+    setIsSyncing(true);
+    setSyncFeedback(null);
+    try {
+      const res = await syncGoogleSheets();
+      setSyncFeedback({
+        type: 'success',
+        msg: res.message || 'Google Sheets sync completed successfully!'
+      });
+      // Refresh metrics after sync
+      getAdminMetrics().then(data => setLiveMetrics(data)).catch(() => {});
+    } catch (err) {
+      setSyncFeedback({
+        type: 'error',
+        msg: 'Sheets sync failed: backend server unreachable.'
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-[#E0E0E0] flex flex-col md:flex-row text-left">
@@ -133,12 +166,16 @@ export default function OrganizerDashboard({ onNavigateToFormBuilder, onLogout }
 
             {/* Organizer Profile Pill */}
             <div className="flex items-center gap-2.5 pl-2 border-l border-white/10">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#BB5CF6] to-[#6366F1] text-white font-bold flex items-center justify-center text-xs">
-                {PRIYA_ORGANIZER.avatar}
-              </div>
+              {user?.avatar && typeof user.avatar === 'string' && user.avatar.startsWith('http') ? (
+                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-[#6366F1]" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#BB5CF6] to-[#6366F1] text-white font-bold flex items-center justify-center text-xs">
+                  {user?.avatar || (user?.name ? user.name[0] : PRIYA_ORGANIZER.avatar)}
+                </div>
+              )}
               <div>
-                <div className="text-xs font-bold text-white leading-none">{PRIYA_ORGANIZER.name}</div>
-                <div className="text-[10px] text-slate-400 font-mono mt-0.5">{PRIYA_ORGANIZER.role}</div>
+                <div className="text-xs font-bold text-white leading-none">{user?.name || PRIYA_ORGANIZER.name}</div>
+                <div className="text-[10px] text-slate-400 font-mono mt-0.5">{user?.role || 'Organizer'}</div>
               </div>
             </div>
           </div>
@@ -153,24 +190,52 @@ export default function OrganizerDashboard({ onNavigateToFormBuilder, onLogout }
                 Event Overview
               </h1>
               <p className="text-xs text-slate-400 mt-1">
-                Real-time metrics across all your hosted hackathons
+                Real-time metrics across all your hosted hackathons & Google Sheets integration
               </p>
             </div>
 
-            <button
-              onClick={onNavigateToFormBuilder}
-              className="px-4 py-2.5 rounded-xl font-bold font-heading text-xs uppercase bg-[#6366F1] hover:bg-[#818CF8] text-white flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)]"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Event & Form</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSyncSheets}
+                disabled={isSyncing}
+                className="px-4 py-2.5 rounded-xl border border-cyan-500/40 bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-300 font-mono text-xs flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                title="Sync database to Google Sheets"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-cyan-400' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Google Sheets'}</span>
+              </button>
+
+              <button
+                onClick={onNavigateToFormBuilder}
+                className="px-4 py-2.5 rounded-xl font-bold font-heading text-xs uppercase bg-[#6366F1] hover:bg-[#818CF8] text-white flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Event & Form</span>
+              </button>
+            </div>
           </div>
+
+          {/* Sync Feedback Alert */}
+          {syncFeedback && (
+            <div className={`p-3.5 rounded-xl text-xs font-mono border flex items-center justify-between ${
+              syncFeedback.type === 'success' 
+                ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-300' 
+                : 'bg-rose-950/50 border-rose-500/40 text-rose-300'
+            }`}>
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 shrink-0 text-[#00FFAA]" />
+                <span>{syncFeedback.msg}</span>
+              </div>
+              <button onClick={() => setSyncFeedback(null)} className="text-slate-400 hover:text-white text-xs">✕</button>
+            </div>
+          )}
 
           {/* 4 STAT METRICS CARDS */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-5 rounded-2xl bg-[#111827] border border-white/5 flex flex-col justify-between">
               <div className="text-3xl font-black text-cyan-400 font-heading">
-                {PRIYA_ORGANIZER.stats.totalEvents}
+                {liveMetrics ? '1 Live' : PRIYA_ORGANIZER.stats.totalEvents}
               </div>
               <div className="text-xs text-slate-400 font-mono mt-2">
                 Total Events
@@ -179,28 +244,28 @@ export default function OrganizerDashboard({ onNavigateToFormBuilder, onLogout }
 
             <div className="p-5 rounded-2xl bg-[#111827] border border-white/5 flex flex-col justify-between">
               <div className="text-3xl font-black text-[#00E5A8] font-heading">
-                {PRIYA_ORGANIZER.stats.registrations}
+                {liveMetrics ? `${liveMetrics.total_teams} Teams` : PRIYA_ORGANIZER.stats.registrations}
               </div>
               <div className="text-xs text-slate-400 font-mono mt-2">
-                Registrations
+                Registrations ({liveMetrics ? `${liveMetrics.total_participants} hackers` : 'Live'})
               </div>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#111827] border border-white/5 flex flex-col justify-between">
               <div className="text-3xl font-black text-[#BB5CF6] font-heading">
-                {PRIYA_ORGANIZER.stats.submissions}
+                {liveMetrics ? `${liveMetrics.checked_in_count} Checked-In` : PRIYA_ORGANIZER.stats.submissions}
               </div>
               <div className="text-xs text-slate-400 font-mono mt-2">
-                Submissions
+                Desk Check-ins
               </div>
             </div>
 
             <div className="p-5 rounded-2xl bg-[#111827] border border-white/5 flex flex-col justify-between">
               <div className="text-3xl font-black text-amber-400 font-heading">
-                {PRIYA_ORGANIZER.stats.awardsGiven}
+                {liveMetrics ? `₹${liveMetrics.total_revenue || 1000}` : PRIYA_ORGANIZER.stats.awardsGiven}
               </div>
               <div className="text-xs text-slate-400 font-mono mt-2">
-                Awards Given
+                Verified Fee / Awards
               </div>
             </div>
           </div>

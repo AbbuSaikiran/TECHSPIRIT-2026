@@ -236,6 +236,147 @@ app.get('/api/team/pass/:token', (req, res) => {
   res.json({ success: true, team });
 });
 
+// Get team details for logged-in user by email
+app.get('/api/teams/user/:email', (req, res) => {
+  const db = loadDb();
+  const email = (req.params.email || '').toLowerCase().trim();
+  const teams = (db.teams || []).filter(t => 
+    (t.leader_email || '').toLowerCase() === email || 
+    (t.members || []).some(m => (m.email || '').toLowerCase() === email)
+  );
+  res.json({
+    success: true,
+    teams,
+    team: teams[0] || null
+  });
+});
+
+// Enter or update team details for logged-in user
+app.post('/api/teams/user/save', async (req, res) => {
+  try {
+    const { team_name, domain, leader_name, leader_email, leader_phone, college, members, project_summary } = req.body;
+    if (!team_name || !leader_email) {
+      return res.status(400).json({ success: false, message: 'Team Name and Leader Email are required' });
+    }
+
+    const db = loadDb();
+    if (!db.teams) db.teams = [];
+
+    const normEmail = leader_email.toLowerCase().trim();
+    let existingIndex = db.teams.findIndex(t => 
+      (t.leader_email || '').toLowerCase() === normEmail ||
+      (t.members || []).some(m => (m.email || '').toLowerCase() === normEmail)
+    );
+
+    let qrDataUrl = '';
+    let qrToken = '';
+    let regId = '';
+    let teamId = '';
+
+    const memberList = Array.isArray(members) && members.length > 0 ? members : [
+      {
+        name: leader_name || 'Leader',
+        email: leader_email,
+        phone: leader_phone || '',
+        college: college || 'Engineering Institute',
+        department: 'Technology',
+        year: '3rd Year',
+        is_leader: true
+      }
+    ];
+
+    if (existingIndex >= 0) {
+      const existing = db.teams[existingIndex];
+      teamId = existing.team_id;
+      regId = existing.registration_id;
+      qrToken = existing.qr_token;
+      qrDataUrl = existing.qr_code_url || '';
+
+      if (!qrDataUrl && qrToken) {
+        try {
+          qrDataUrl = await QRCode.toDataURL(qrToken, {
+            color: { dark: '#00FFAA', light: '#0A0A0F' },
+            margin: 2,
+            width: 300
+          });
+        } catch (e) {}
+      }
+
+      existing.team_name = team_name;
+      existing.domain = domain || existing.domain || 'Artificial Intelligence & ML';
+      existing.leader_name = leader_name || existing.leader_name;
+      existing.leader_email = leader_email;
+      existing.leader_phone = leader_phone || existing.leader_phone || '';
+      existing.college = college || existing.college || '';
+      existing.project_summary = project_summary || existing.project_summary || '';
+      existing.team_size = memberList.length;
+      existing.members = memberList;
+      existing.qr_code_url = qrDataUrl;
+      existing.updated_at = new Date().toISOString();
+
+      saveDb(db);
+      logAudit('UPDATE_TEAM_DETAILS', `Team ${team_name} (${regId}) details updated by ${leader_email}.`, leader_email);
+      appendRegistrationRow(existing, memberList);
+
+      return res.json({
+        success: true,
+        message: 'Team details updated successfully!',
+        team: existing
+      });
+    } else {
+      const nextNum = db.teams.length + 1;
+      regId = `BTS26-${String(nextNum).padStart(4, '0')}`;
+      teamId = `team-bts-${crypto.randomBytes(4).toString('hex')}`;
+      qrToken = `QR-${regId}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+      try {
+        qrDataUrl = await QRCode.toDataURL(qrToken, {
+          color: { dark: '#00FFAA', light: '#0A0A0F' },
+          margin: 2,
+          width: 300
+        });
+      } catch (e) {}
+
+      const newTeam = {
+        team_id: teamId,
+        registration_id: regId,
+        event_id: 'TECHSPIRIT-2026',
+        team_name,
+        domain: domain || 'Artificial Intelligence & ML',
+        leader_name: leader_name || 'Leader',
+        leader_email,
+        leader_phone: leader_phone || '',
+        college: college || 'BITS Pilani / Partner Institute',
+        team_size: memberList.length,
+        members: memberList,
+        project_summary: project_summary || '',
+        registration_status: 'CONFIRMED',
+        payment_status: 'PAID',
+        amount: 1000,
+        fee_type: 'online',
+        qr_token: qrToken,
+        qr_code_url: qrDataUrl,
+        created_at: new Date().toISOString(),
+        checked_in: false,
+        checkin_time: null
+      };
+
+      db.teams.push(newTeam);
+      saveDb(db);
+      logAudit('REGISTER_TEAM', `Team ${team_name} (${regId}) created by ${leader_email}.`, leader_email);
+      appendRegistrationRow(newTeam, memberList);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Team details registered and saved successfully!',
+        team: newTeam
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // -------------------------------------------------------------
 // 3. EVENT-DAY QR CHECK-IN SCANNER
 // -------------------------------------------------------------
@@ -295,6 +436,72 @@ function handleCheckin(req, res) {
 
 app.post('/api/operations/checkin', handleCheckin);
 app.post('/api/scanner/checkin', handleCheckin);
+
+app.get('/api/operations/checkins', (req, res) => {
+  const db = loadDb();
+  res.json({
+    success: true,
+    checkins: (db.checkins || []).slice().reverse()
+  });
+});
+
+app.get('/api/operations/volunteers', (req, res) => {
+  const db = loadDb();
+  if (!db.volunteers || db.volunteers.length === 0) {
+    db.volunteers = [
+      { id: 'vol-1', name: 'Aakash Verma', email: 'aakash.v@bitstechspirit.org', phone: '+91 98451 22301', desk: 'Desk Alpha (Main Gate)', role: 'QR Verification Lead', shift: 'Morning (08:00 - 14:00)', active: true, scansCount: 14 },
+      { id: 'vol-2', name: 'Pooja Iyer', email: 'pooja.i@bitstechspirit.org', phone: '+91 97120 44512', desk: 'Desk Beta (Auditorium)', role: 'Attendee Kit & ID Badges', shift: 'Morning (08:00 - 14:00)', active: true, scansCount: 9 },
+      { id: 'vol-3', name: 'Kunal Deshmukh', email: 'kunal.d@bitstechspirit.org', phone: '+91 99801 88310', desk: 'Desk Gamma (Hardware Lab)', role: 'Component & Sensor Vault', shift: 'All Day (09:00 - 18:00)', active: true, scansCount: 5 },
+      { id: 'vol-4', name: 'Simran Kaur', email: 'simran.k@bitstechspirit.org', phone: '+91 96500 11982', desk: 'Desk Delta (Dining & Cafe)', role: 'Meal Pass Dispatcher', shift: 'Afternoon (12:00 - 18:00)', active: true, scansCount: 0 }
+    ];
+    saveDb(db);
+  }
+  res.json({ success: true, volunteers: db.volunteers });
+});
+
+app.post('/api/operations/volunteers', (req, res) => {
+  const { name, email, phone, desk, role, shift } = req.body;
+  if (!name || !desk) {
+    return res.status(400).json({ success: false, message: 'Name and Desk are required' });
+  }
+  const db = loadDb();
+  if (!db.volunteers) db.volunteers = [];
+  const newVol = {
+    id: `vol-${Date.now()}`,
+    name,
+    email: email || '',
+    phone: phone || '',
+    desk,
+    role: role || 'Floor Volunteer',
+    shift: shift || 'General (09:00 - 17:00)',
+    active: true,
+    scansCount: 0
+  };
+  db.volunteers.push(newVol);
+  saveDb(db);
+  logAudit('ADD_VOLUNTEER', `Added volunteer ${name} assigned to ${desk}.`, name);
+  res.status(201).json({ success: true, volunteer: newVol });
+});
+
+app.post('/api/operations/kit-distribution', (req, res) => {
+  const { team_id, badges_issued, swag_distributed, meal_passes_given, wifi_credentials_passed } = req.body;
+  const db = loadDb();
+  const team = (db.teams || []).find(t => t.team_id === team_id || t.registration_id === team_id);
+  if (!team) {
+    return res.status(404).json({ success: false, message: 'Team not found' });
+  }
+  if (!team.kit_distribution) team.kit_distribution = {};
+  team.kit_distribution = {
+    badges_issued: Boolean(badges_issued),
+    swag_distributed: Boolean(swag_distributed),
+    meal_passes_given: Boolean(meal_passes_given),
+    wifi_credentials_passed: Boolean(wifi_credentials_passed),
+    updated_at: new Date().toISOString()
+  };
+  saveDb(db);
+  logAudit('KIT_DISTRIBUTION', `Updated kit distribution for ${team.team_name} (${team.registration_id}).`);
+  res.json({ success: true, kit_distribution: team.kit_distribution });
+});
 
 // -------------------------------------------------------------
 // 4. AUTHENTICATION (EMAIL/PASSWORD & GOOGLE OAUTH)
